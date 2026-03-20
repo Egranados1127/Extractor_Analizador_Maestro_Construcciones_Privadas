@@ -210,34 +210,32 @@ if check_login():
                     
                 if selected_pdf:
                     st.markdown(f"📄 **Archivo Vinculado:** `{selected_pdf}`")
-                    pdf_path = None
-                    # Buscamos en carpetas locales asumiendo la estructura actual.
-                    # En un entorno de cloud deployment requeriría configuración de S3 o Google Cloud Storage.
-                    search_dirs = [Path.cwd() / "Descargas" / "Itagui", Path.cwd() / "Descargas" / "Itagui_2", Path.cwd() / "Tipos Pdf"]
-                    for d in search_dirs:
-                        if (d / selected_pdf).exists():
-                            pdf_path = d / selected_pdf
-                            break
-                            
-                    if pdf_path:
-                        with open(pdf_path, "rb") as f:
-                            pdf_bytes_down = f.read()
-                        st.download_button(label="📥 Descargar Documento", data=pdf_bytes_down, file_name=selected_pdf, mime="application/pdf")
-                        
-                        with st.container(height=600):
-                            try:
-                                # Renderizado
-                                doc = fitz.open(pdf_path)
+                    
+                    # URL Pública directamente desde el Bucket de Supabase
+                    SUPABASE_STORAGE_URL = "https://oubqiodpjhkdrpeukvag.supabase.co/storage/v1/object/public/construcciones"
+                    pdf_public_url = f"{SUPABASE_STORAGE_URL}/{selected_pdf}"
+                    
+                    # Mostrar botón de descarga web directa usando el enlace de Supabase
+                    st.markdown(f"[📥 Clic aquí para descargar el PDF original]({pdf_public_url})")
+                    
+                    # Cargar y previsualizar utilizando el link en vivo
+                    with st.container(height=600):
+                        try:
+                            # Streamlit renderizado Iframe / Descarga
+                            import requests
+                            res = requests.get(pdf_public_url, timeout=15)
+                            if res.status_code == 200:
+                                doc = fitz.open(stream=res.content, filetype="pdf")
                                 for page_num in range(len(doc)):
                                     page = doc.load_page(page_num)
                                     pix = page.get_pixmap(dpi=150)
                                     img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
                                     st.image(img, use_container_width=True, caption=f"Página {page_num + 1} de {len(doc)}")
                                 doc.close()
-                            except Exception as e:
-                                st.warning(f"La vista previa del PDF no se pudo cargar: {e}")
-                    else:
-                        st.info("ℹ️ El documento original no está disponible en la versión desplegada remotamente, pero sus datos se han preservado exitosamente.")
+                            else:
+                                st.warning("ℹ️ Este archivo aún no se ha sincronizado a la nube. Sincroniza tu computadora primero.")
+                        except Exception as e:
+                            st.warning(f"La vista previa del PDF falló o está cargando lento: {e}")
                 else:
                     st.info("👈 Haz clic en cualquier resolución listada a la izquierda para intentar previsualizar su documento oficial en este espacio.")
 
