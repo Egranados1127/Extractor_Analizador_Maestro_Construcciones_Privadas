@@ -9,8 +9,11 @@ from PIL import Image
 from pathlib import Path
 import base64
 
+import os
+
 # Configuración de la Base de Datos Local
-DB_PATH = "master_construcciones.db"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DB_PATH = os.path.join(BASE_DIR, "master_construcciones.db")
 
 def load_from_db():
     try:
@@ -96,7 +99,7 @@ if check_login():
     col_logo, col_title, col_logout = st.columns([1, 3.5, 0.5])
     with col_logo:
         try:
-            st.image("logo.png", use_container_width=True)
+            st.image(os.path.join(BASE_DIR, "logo.png"), use_container_width=True)
         except:
             st.write("🏢")
     with col_title:
