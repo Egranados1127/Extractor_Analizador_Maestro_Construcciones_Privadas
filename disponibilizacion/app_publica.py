@@ -11,8 +11,11 @@ import base64
 import requests
 import unicodedata
 
+import os
+
 # Configuración de la Base de Datos Local y Nube
-DB_PATH = "master_construcciones.db"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DB_PATH = os.path.join(BASE_DIR, "master_construcciones.db")
 SUPABASE_URL = "https://oubqiodpjhkdrpeukvag.supabase.co"
 SUPABASE_KEY = "sb_secret_GUCb7gIZQguts5VjPsxeww_73QJsQo4"
 BUCKET_NAME = "construcciones"
@@ -101,7 +104,8 @@ if check_login():
     col_logo, col_title, col_logout = st.columns([1, 3.5, 0.5])
     with col_logo:
         try:
-            st.image("logo.png", use_container_width=True)
+            logo_path = os.path.join(BASE_DIR, "logo.png")
+            st.image(logo_path, use_container_width=True)
         except:
             st.write("🏢")
     with col_title:
