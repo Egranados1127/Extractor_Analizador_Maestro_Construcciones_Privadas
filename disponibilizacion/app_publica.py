@@ -8,12 +8,14 @@ import fitz
 from PIL import Image
 from pathlib import Path
 import base64
+import requests
+import unicodedata
 
-import os
-
-# Configuración de la Base de Datos Local
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DB_PATH = os.path.join(BASE_DIR, "master_construcciones.db")
+# Configuración de la Base de Datos Local y Nube
+DB_PATH = "master_construcciones.db"
+SUPABASE_URL = "https://oubqiodpjhkdrpeukvag.supabase.co"
+SUPABASE_KEY = "sb_secret_GUCb7gIZQguts5VjPsxeww_73QJsQo4"
+BUCKET_NAME = "construcciones"
 
 def load_from_db():
     try:
@@ -99,7 +101,7 @@ if check_login():
     col_logo, col_title, col_logout = st.columns([1, 3.5, 0.5])
     with col_logo:
         try:
-            st.image(os.path.join(BASE_DIR, "logo.png"), use_container_width=True)
+            st.image("logo.png", use_container_width=True)
         except:
             st.write("🏢")
     with col_title:
@@ -210,32 +212,55 @@ if check_login():
                     
                 if selected_pdf:
                     st.markdown(f"📄 **Archivo Vinculado:** `{selected_pdf}`")
-                    
-                    # URL Pública directamente desde el Bucket de Supabase
-                    SUPABASE_STORAGE_URL = "https://oubqiodpjhkdrpeukvag.supabase.co/storage/v1/object/public/construcciones"
-                    pdf_public_url = f"{SUPABASE_STORAGE_URL}/{selected_pdf}"
-                    
-                    # Mostrar botón de descarga web directa usando el enlace de Supabase
-                    st.markdown(f"[📥 Clic aquí para descargar el PDF original]({pdf_public_url})")
-                    
-                    # Cargar y previsualizar utilizando el link en vivo
-                    with st.container(height=600):
-                        try:
-                            # Streamlit renderizado Iframe / Descarga
-                            import requests
-                            res = requests.get(pdf_public_url, timeout=15)
-                            if res.status_code == 200:
-                                doc = fitz.open(stream=res.content, filetype="pdf")
+                    pdf_path = None
+                    # Buscamos en carpetas locales asumiendo la estructura actual.
+                    # En un entorno de cloud deployment requeriría configuración de S3 o Google Cloud Storage.
+                    search_dirs = [Path.cwd() / "Descargas" / "Itagui", Path.cwd() / "Descargas" / "Itagui_2", Path.cwd() / "Tipos Pdf"]
+                    for d in search_dirs:
+                        if (d / selected_pdf).exists():
+                            pdf_path = d / selected_pdf
+                            break
+                            
+                    if pdf_path:
+                        with open(pdf_path, "rb") as f:
+                            pdf_bytes_down = f.read()
+                    else:
+                        # Si no está local, buscar en la nube (Supabase)
+                        with st.spinner("Descargando PDF desde la Nube..."):
+                            clean_name = unicodedata.normalize('NFKD', selected_pdf).encode('ASCII', 'ignore').decode('utf-8')
+                            url = f"{SUPABASE_URL}/storage/v1/object/public/{BUCKET_NAME}/{clean_name}"
+                            try:
+                                # Intento público primero, si falla intenta con headers autenticados
+                                res = requests.get(url)
+                                if res.status_code != 200:
+                                    url_auth = f"{SUPABASE_URL}/storage/v1/object/{BUCKET_NAME}/{clean_name}"
+                                    headers = {"Authorization": f"Bearer {SUPABASE_KEY}", "apikey": SUPABASE_KEY}
+                                    res = requests.get(url_auth, headers=headers)
+                                
+                                if res.status_code == 200:
+                                    pdf_bytes_down = res.content
+                                else:
+                                    pdf_bytes_down = None
+                            except:
+                                pdf_bytes_down = None
+                            
+                    if pdf_bytes_down:
+                        st.download_button(label="📥 Descargar Documento (Local/Nube)", data=pdf_bytes_down, file_name=selected_pdf, mime="application/pdf")
+                        
+                        with st.container(height=600):
+                            try:
+                                # Renderizado desde bytes en memoria
+                                doc = fitz.open(stream=pdf_bytes_down, filetype="pdf")
                                 for page_num in range(len(doc)):
                                     page = doc.load_page(page_num)
                                     pix = page.get_pixmap(dpi=150)
                                     img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
                                     st.image(img, use_container_width=True, caption=f"Página {page_num + 1} de {len(doc)}")
                                 doc.close()
-                            else:
-                                st.warning("ℹ️ Este archivo aún no se ha sincronizado a la nube. Sincroniza tu computadora primero.")
-                        except Exception as e:
-                            st.warning(f"La vista previa del PDF falló o está cargando lento: {e}")
+                            except Exception as e:
+                                st.warning(f"La vista previa del PDF no se pudo cargar: {e}")
+                    else:
+                        st.error("❌ El archivo no está disponible ni en local ni en la nube.")
                 else:
                     st.info("👈 Haz clic en cualquier resolución listada a la izquierda para intentar previsualizar su documento oficial en este espacio.")
 
