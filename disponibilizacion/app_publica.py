@@ -149,13 +149,21 @@ with tab_privadas:
                 if filtro_mes != 'Todos los periodos': df_mostrar = df_mostrar[df_mostrar['Mes_Periodo'] == filtro_mes]
                 if filtro_muni != 'Todos los municipios': df_mostrar = df_mostrar[df_mostrar['municipio'] == filtro_muni]
 
-                event = st.dataframe(
-                    df_mostrar.drop(columns=['id', 'fecha_extraccion', 'Mes_Periodo', 'periodo_dt', 'lat', 'lon'], errors='ignore'), 
-                    use_container_width=True,
-                    on_select="rerun",
-                    selection_mode="single-row",
-                    hide_index=True
-                )
+                try:
+                    event = st.dataframe(
+                        df_mostrar.drop(columns=['id', 'fecha_extraccion', 'Mes_Periodo', 'periodo_dt', 'lat', 'lon'], errors='ignore'), 
+                        use_container_width=True,
+                        on_select="rerun",
+                        selection_mode="single-row",
+                        hide_index=True
+                    )
+                except TypeError:
+                    # Versión de Streamlit antigua en la nube (Falla silenciosa para evitar crash)
+                    event = st.dataframe(
+                        df_mostrar.drop(columns=['id', 'fecha_extraccion', 'Mes_Periodo', 'periodo_dt', 'lat', 'lon'], errors='ignore'), 
+                        use_container_width=True,
+                        hide_index=True
+                    )
             
             with view_col2:
                 st.markdown("#### 🔍 Visor de Soporte Legal")
