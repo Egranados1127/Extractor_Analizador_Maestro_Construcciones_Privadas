@@ -1,15 +1,23 @@
 import streamlit as st
-import pandas as pd
-import os
-import sqlite3
-import time
-import plotly.express as px
-from pathlib import Path
-from geopy.geocoders import Nominatim, ArcGIS
-import folium
-from streamlit_folium import st_folium
-import requests
-import unicodedata
+import traceback
+
+try:
+    import pandas as pd
+    import os
+    import sqlite3
+    import time
+    import plotly.express as px
+    from pathlib import Path
+    from geopy.geocoders import Nominatim, ArcGIS
+    import folium
+    from streamlit_folium import st_folium
+    import requests
+    import unicodedata
+    import unicodedata
+except Exception as builtin_or_import_error:
+    st.error(f"🚨 STREAMLIT FATAL IMPORT ERROR: {builtin_or_import_error}")
+    st.code(traceback.format_exc())
+    st.stop()
 
 # Configuración de la Base de Datos Local y Nube
 DB_PATH = "master_construcciones.db"
