@@ -9,10 +9,20 @@ import unicodedata
 import base64
 
 # Configuración de la Base de Datos Local y Nube
-DB_PATH = "master_construcciones.db"
+import os
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DB_PATH = os.path.join(BASE_DIR, "master_construcciones.db")
+
 SUPABASE_URL = "https://oubqiodpjhkdrpeukvag.supabase.co"
 SUPABASE_KEY = "sb_secret_GUCb7gIZQguts5VjPsxeww_73QJsQo4"
 BUCKET_NAME = "construcciones"
+
+# Intentar conseguir los usuarios, sino un admin por defecto
+try:
+    import seguridad
+    usuarios = seguridad.USUARIOS_AUTORIZADOS
+except:
+    usuarios = {"Gerencia": "Fiel2026"}
 
 @st.cache_data(ttl=300)
 def load_from_db():
@@ -27,7 +37,7 @@ def load_from_db():
 @st.cache_data(ttl=300)
 def load_public_from_db():
     try:
-        conn = sqlite3.connect('master_construcciones.db')
+        conn = sqlite3.connect(DB_PATH)
         df_pub = pd.read_sql_query("SELECT * FROM obras_publicas WHERE tag_fiel = 'APLICA' ORDER BY fecha_publicacion DESC", conn)
         conn.close()
         return df_pub
@@ -37,7 +47,7 @@ def load_public_from_db():
 @st.cache_data(ttl=300)
 def load_firmas_from_db():
     try:
-        conn = sqlite3.connect('master_construcciones.db')
+        conn = sqlite3.connect(DB_PATH)
         df_firmas = pd.read_sql_query("SELECT * FROM firmas_electricas ORDER BY id DESC", conn)
         conn.close()
         return df_firmas
@@ -45,6 +55,25 @@ def load_firmas_from_db():
         return pd.DataFrame()
 
 st.set_page_config(page_title="Radar Maestro - FIEL Ferreteros", layout="wide", page_icon="🏗️")
+
+if 'autenticado' not in st.session_state:
+    st.session_state['autenticado'] = False
+
+if not st.session_state['autenticado']:
+    st.title("🔒 Acceso Restringido")
+    st.info("Ingresa tus credenciales comerciales para acceder a la base de datos B2B.")
+    
+    col_log1, col_log2 = st.columns([1, 2])
+    with col_log1:
+        usr = st.text_input("👤 Usuario comercial")
+        pwd = st.text_input("🔑 Contraseña", type="password")
+        if st.button("Ingresar", type="primary", use_container_width=True):
+            if usr in usuarios and usuarios[usr] == pwd:
+                st.session_state['autenticado'] = True
+                st.rerun()
+            else:
+                st.error("❌ Credenciales inválidas. Verifica tu usuario y contraseña con el administrador.")
+    st.stop()
 
 st.markdown("""
 <style>
