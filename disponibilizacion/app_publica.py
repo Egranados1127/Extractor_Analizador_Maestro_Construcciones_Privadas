@@ -269,10 +269,8 @@ with tab_publicas:
         df_show['url_proceso'] = df_show['url_proceso'].apply(lambda x: f'<a href="{x}" target="_blank" style="color:#bfdbfe;">🔗 Visitar SECOP</a>')
         df_show['valor_estimado'] = df_show['valor_estimado'].apply(lambda x: f"$ {x:,.0f}")
         
-        html_pub = f"""
-        <style>.pub-table table {{ width: 100%; border-collapse: collapse; font-size: 13px; }} .pub-table th {{ background: rgba(255,255,255,0.1); color: white; padding: 8px; border-bottom: 2px solid white; text-align: left; }} .pub-table td {{ padding: 8px; border-bottom: 1px solid rgba(255,255,255,0.1); color: #eeeeee; word-wrap: break-word; white-space: normal; }} .pub-table tr:hover {{ background: rgba(255,255,255,0.05); }}</style>
-        <div class="pub-table" style="width: 100%;">{df_show.to_html(escape=False, index=False)}</div>
-        """
+        html_pub = f"""<style>.pub-table table {{ width: 100%; border-collapse: collapse; font-size: 13px; }} .pub-table th {{ background: rgba(255,255,255,0.1); color: white; padding: 8px; border-bottom: 2px solid white; text-align: left; }} .pub-table td {{ padding: 8px; border-bottom: 1px solid rgba(255,255,255,0.1); color: #eeeeee; word-wrap: break-word; white-space: normal; }} .pub-table tr:hover {{ background: rgba(255,255,255,0.05); }}</style>
+<div class="pub-table" style="width: 100%;">{df_show.to_html(escape=False, index=False)}</div>"""
         st.markdown(html_pub, unsafe_allow_html=True)
     else:
         st.info("No hay datos de SECOP cargados.")
@@ -289,10 +287,9 @@ with tab_firmas:
         if score_filtro: df_firmas_view = df_firmas_view[df_firmas_view['score'].isin(score_filtro)]
         df_firmas_view['url'] = df_firmas_view['url'].apply(lambda x: f'<a href="{x}" target="_blank" style="color:#bfdbfe; font-weight:bold;">🔗 Web de la Empresa</a>' if x and str(x).strip() != "" else "-")
         df_firmas_view = df_firmas_view[['score', 'nombre', 'especialidad', 'contacto', 'resumen', 'url']]
-        html_f = f"""
-        <style>.f-table table {{ width: 100%; border-collapse: collapse; font-size: 13.5px; }} .f-table th {{ background: rgba(255,255,255,0.1); color: white; padding: 10px; border-bottom: 2px solid #60a5fa; text-align: left; }} .f-table td {{ padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); color: #e2e8f0; word-wrap: break-word; white-space: normal; }} .f-table tr:hover {{ background: rgba(255,255,255,0.1); }}</style>
-        <div class="f-table" style="width: 100%;">{df_firmas_view.to_html(escape=False, index=False)}</div>
-        """
+        
+        html_f = f"""<style>.f-table table {{ width: 100%; border-collapse: collapse; font-size: 13.5px; }} .f-table th {{ background: rgba(255,255,255,0.1); color: white; padding: 10px; border-bottom: 2px solid #60a5fa; text-align: left; }} .f-table td {{ padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); color: #e2e8f0; word-wrap: break-word; white-space: normal; }} .f-table tr:hover {{ background: rgba(255,255,255,0.1); }}</style>
+<div class="f-table" style="width: 100%;">{df_firmas_view.to_html(escape=False, index=False)}</div>"""
         st.markdown(html_f, unsafe_allow_html=True)
     else:
         st.info("💡 Aún no se han capturado firmas.")
