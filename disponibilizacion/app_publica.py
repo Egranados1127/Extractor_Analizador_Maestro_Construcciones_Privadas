@@ -284,8 +284,13 @@ with tab_firmas:
         scores_disp = sorted(df_firmas['score'].dropna().unique().tolist())
         score_filtro = st.multiselect("Filtrar por Relevancia Estratégica (Score):", scores_disp, default=[])
         df_firmas_view = df_firmas.copy()
-        if score_filtro: df_firmas_view = df_firmas_view[df_firmas_view['score'].isin(score_filtro)]
-        df_firmas_view['url'] = df_firmas_view['url'].apply(lambda x: f'<a href="{x}" target="_blank" style="color:#bfdbfe; font-weight:bold;">🔗 Web de la Empresa</a>' if x and str(x).strip() != "" else "-")
+        def make_url(val):
+            val = str(val).strip()
+            if not val or val == "None" or val == "nan": return "-"
+            if not val.startswith("http"): val = "https://" + val
+            return f'<a href="{val}" target="_blank" style="color:#bfdbfe; font-weight:bold;">🔗 Web de la Empresa</a>'
+        
+        df_firmas_view['url'] = df_firmas_view['url'].apply(make_url)
         df_firmas_view = df_firmas_view[['score', 'nombre', 'especialidad', 'contacto', 'resumen', 'url']]
         
         html_f = f"""<style>.f-table table {{ width: 100%; border-collapse: collapse; font-size: 13.5px; }} .f-table th {{ background: rgba(255,255,255,0.1); color: white; padding: 10px; border-bottom: 2px solid #60a5fa; text-align: left; }} .f-table td {{ padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); color: #e2e8f0; word-wrap: break-word; white-space: normal; }} .f-table tr:hover {{ background: rgba(255,255,255,0.1); }}</style>
